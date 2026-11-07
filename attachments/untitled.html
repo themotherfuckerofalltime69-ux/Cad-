@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typeless Font Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #050507;
+    --cyan: #00f0ff;
+    --cyan-glow: rgba(0, 240, 255, 0.25);
+    --text-main: #ffffff;
+    --text-muted: #8c92a4;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .bg-hero {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(20, 30, 45, 0.6) 0%, rgba(5, 5, 7, 0.95) 70%),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%23050507" width="100" height="100"/><circle cx="20" cy="70" r="40" fill="%23101825" opacity="0.5"/></svg>');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+    opacity: 0.7;
+    transition: opacity 0.5s ease;
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100vh;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .fullscreen-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .fullscreen-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan-glow);
+  }
+
+  .logo-tag {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 40px;
+    align-items: center;
+    margin: auto 0;
+  }
+
+  @media (max-width: 900px) {
+    .main-content {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+    .container {
+      padding: 20px;
+    }
+  }
+
+  .title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .brand-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    font-weight: 900;
+    color: var(--cyan);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 40px var(--cyan-glow);
+    text-transform: uppercase;
+  }
+
+  .sub-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-main);
+    line-height: 1.4;
+  }
+
+  .info-card {
+    position: relative;
+    background: rgba(10, 14, 23, 0.6);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 32px;
+    backdrop-filter: blur(10px);
+    clip-path: polygon(
+      0 0,
+      calc(100% - 20px) 0,
+      100% 20px,
+      100% 100%,
+      20px 100%,
+      0 calc(100% - 20px)
+    );
+  }
+
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 20px; height: 20px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0, 240, 255, 0.5) 50%);
+  }
+
+  .info-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #c0c5d0;
+    letter-spacing: 0.02em;
+  }
+
+  .proceed-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 14px 28px;
+    cursor: pointer;
+    margin-top: 10px;
+    align-self: flex-start;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .proceed-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cyan);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .proceed-btn:hover {
+    color: var(--bg-color);
+    box-shadow: 0 0 25px var(--cyan-glow);
+  }
+
+  .proceed-btn:hover::after {
+    opacity: 1;
+  }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-center {
+    color: var(--text-main);
+  }
+
+  .sparkle {
+    display: inline-block;
+    color: var(--cyan);
+    margin-right: 8px;
+    text-shadow: 0 0 10px var(--cyan);
+  }
+
+  /* Dashboard View */
+  .dashboard-view {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background: var(--bg-color);
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .dashboard-view.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar {
+    width: 260px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(8, 11, 18, 0.95);
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+    transition: width 0.3s ease, padding 0.3s ease;
+    position: relative;
+  }
+
+  .sidebar.collapsed {
+    width: 72px;
+    padding: 30px 12px;
+  }
+
+  .sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+  }
+
+  .sidebar-brand {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px var(--cyan-glow);
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s ease, width 0.3s ease;
+  }
+
+  .sidebar.collapsed .sidebar-brand {
+    opacity: 0;
+    width: 0;
+    pointer-events: none;
+  }
+
+  .collapse-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .collapse-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan-glow);
+  }
+
+  .sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: none;
+  }
+
+  .sidebar-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    height: 46px;
+  }
+
+  .sidebar.collapsed .sidebar-item {
+    padding: 12px;
+    justify-content: center;
+  }
+
+  .sidebar.collapsed .sidebar-item span {
+    display: none;
+  }
+
+  .sidebar-item:hover, .sidebar-item.active {
+    color: var(--cyan);
+    background: rgba(0, 240, 255, 0.05);
+    border-left-color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan-glow);
+  }
+
+  .dashboard-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    overflow-y: auto;
+  }
+
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
+  }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 900px) {
+    .dashboard-view {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100% !important;
+      padding: 15px 20px !important;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      overflow-x: auto;
+    }
+    .sidebar-top {
+      margin-bottom: 0;
+      width: 100%;
+    }
+    .sidebar-brand {
+      opacity: 1 !important;
+      width: auto !important;
+    }
+    .collapse-btn {
+      display: none;
+    }
+    .sidebar-menu {
+      flex-direction: row;
+      gap: 10px;
+      display: none;
+    }
+    .dash-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .dash-card {
+    background: rgba(10, 14, 23, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 180px;
+  }
+
+  .dash-card-title {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .dash-card-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan-glow);
+  }
+
+  .back-btn {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-main);
+    font-family: 'Share Tech Mono', monospace;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s ease;
+  }
+
+  .back-btn:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-hero"></div>
+
+  <div class="container" id="landingContainer">
+    <header>
+      <div class="logo-tag"><span class="sparkle">+</span>// Code at the Speed of Thoughts //</div>
+      <div class="header-right">
+        <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+          <span>[FS]</span> Fullscreen
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="title-section">
+        <h1 class="brand-title">Typeless</h1>
+        <div class="sub-title">
+          Code at the Speed of Thoughts
+        </div>
+        <button class="proceed-btn" id="proceedBtn">
+          Proceed <span class="sparkle">&gt;&gt;</span>
+        </button>
+      </div>
+
+      <div class="info-card">
+        <p class="info-text">
+          Futuristic sans-serif display interface featuring wide proportions, sharp geometric angles, and subtle diagonal cutouts.
+        </p>
+      </div>
+    </main>
+
+    <footer>
+      <div>Otf &amp; Ttf</div>
+      <div class="footer-center">Multilingual Support</div>
+      <div>&copy; 2026</div>
+    </footer>
+  </div>
+
+  <div class="dashboard-view" id="dashboardView">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-brand">Typeless</div>
+        <button class="collapse-btn" id="collapseBtn" title="Toggle Menu">&lt;&gt;</button>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item active" data-title="typeless prompt"><span>typeless prompt</span></li>
+        <li class="sidebar-item" data-title="component blocks"><span>component blocks</span></li>
+        <li class="sidebar-item" data-title="image/CAD"><span>image/CAD</span></li>
+        <li class="sidebar-item" data-title="/Skilled"><span>/Skilled</span></li>
+        <li class="sidebar-item" data-title="Settings"><span>Settings</span></li>
+      </ul>
+    </aside>
+    <div class="dashboard-main">
+      <div class="dash-header">
+        <div class="logo-tag" id="currentSectionTitle"><span class="sparkle">+</span>// typeless prompt //</div>
+        <button class="back-btn" id="backBtn">&lt;&lt; Return</button>
+      </div>
+      <div class="dash-grid" id="dashGrid">
+        <div class="dash-card">
+          <div class="dash-card-title">Active Nodes</div>
+          <div class="dash-card-value">1,024</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Latency</div>
+          <div class="dash-card-value">0.4ms</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Throughput</div>
+          <div class="dash-card-value">99.9%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const proceedBtn = document.getElementById('proceedBtn');
+    const backBtn = document.getElementById('backBtn');
+    const landingContainer = document.getElementById('landingContainer');
+    const dashboardView = document.getElementById('dashboardView');
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const sidebar = document.getElementById('sidebar');
+    const currentSectionTitle = document.getElementById('currentSectionTitle');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    proceedBtn.addEventListener('click', () => {
+      landingContainer.style.opacity = '0';
+      landingContainer.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        landingContainer.style.display = 'none';
+        dashboardView.classList.add('active');
+      }, 300);
+    });
+
+    backBtn.addEventListener('click', () => {
+      dashboardView.classList.remove('active');
+      landingContainer.style.display = 'flex';
+      setTimeout(() => {
+        landingContainer.style.opacity = '1';
+        landingContainer.style.transform = 'scale(1)';
+      }, 50);
+    });
+
+    collapseBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', () => {
+        sidebarItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const titleText = item.getAttribute('data-title');
+        currentSectionTitle.innerHTML = `<span class="sparkle">+</span>// ${titleText.toUpperCase()} //`;
+      });
+    });
+  </script>
+</body>
+</html>

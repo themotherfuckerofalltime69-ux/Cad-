@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNC AI Prompt Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<style>
+  :root {
+    --bg-base: #090d16;
+    --bg-surface: #111827;
+    --bg-panel: #1f2937;
+    --bg-hover: #374151;
+    --border-color: #374151;
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: var(--font-family);
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  .topnav {
+    height: 44px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    font-weight: 500;
+  }
+
+  .nav-item:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-main);
+  }
+
+  .nav-item.dropdown::after {
+    content: " ▼";
+    font-size: 8px;
+    margin-left: 4px;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+
+  .modebar {
+    height: 40px;
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 6px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-family: var(--font-family);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  .mode-btn:hover {
+    color: var(--text-main);
+    background-color: var(--bg-hover);
+  }
+
+  .mode-btn.active {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  .modebar-divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+  }
+
+  .workspace {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .viewport {
+    flex: 1;
+    background: radial-gradient(circle at center, #111827 0%, #090d16 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #webgl-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    outline: none;
+  }
+
+  .viewport-gizmo {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 60px;
+    height: 60px;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .sidebar {
+    width: 320px;
+    background-color: var(--bg-surface);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 10;
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .ai-prompt-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+  }
+
+  .ai-select {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: #c084fc;
+    padding: 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    outline: none;
+  }
+
+  .ai-textarea {
+    width: 100%;
+    height: 70px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px;
+    border-radius: 4px;
+    font-family: var(--font-family);
+    font-size: 12px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  /* Intelligent Prompt Suggestions Dropdown */
+  .ai-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    max-height: 140px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: none;
+  }
+
+  .ai-suggestion-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ai-suggestion-item:last-child {
+    border-bottom: none;
+  }
+
+  .ai-suggestion-item:hover, .ai-suggestion-item.selected {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .ai-suggestion-item .tag {
+    font-size: 9px;
+    opacity: 0.7;
+    background: rgba(255,255,255,0.15);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  .ai-textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .ai-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s;
+    font-family: var(--font-family);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  .ai-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .ai-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+
+  .tool-icon {
+    aspect-ratio: 1;
+    background: var(--bg-panel);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+  }
+
+  .tool-icon:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-color);
+  }
+
+  .tool-icon.active {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .prop-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .prop-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .prop-label {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .prop-value {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    width: 60px;
+    text-align: right;
+    font-family: var(--font-family);
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    margin-top: 4px;
+  }
+
+  #error-console {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(127, 29, 29, 0.95);
+    border-t: 1px solid #dc2626;
+    color: #fca5a5;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-family: monospace;
+    max-height: 100px;
+    overflow-y: auto;
+    z-index: 20;
+    display: none;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spinner {
+    animation: spin 1.5s linear infinite;
+    display: inline-block;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <header class="topnav">
+    <div class="nav-left">
+      <div class="nav-item dropdown">File</div>
+      <div class="nav-item dropdown">Interface</div>
+      <div class="nav-item">Settings</div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-item" style="color: var(--accent);">◇ AI CNC</div>
+    </div>
+  </header>
+
+  <nav class="modebar">
+    <button class="mode-btn" style="color: var(--accent);">+M Library</button>
+    <button class="mode-btn">Tools</button>
+    <div class="modebar-divider"></div>
+    <button class="mode-btn active">Modeling</button>
+    <button class="mode-btn">Sculpting</button>
+    <button class="mode-btn">Texture paint</button>
+    <button class="mode-btn">Vertex paint</button>
+    <button class="mode-btn">UV editor</button>
+    <div class="modebar-divider"></div>
+    <button class="mode-btn">Material</button>
+    <button class="mode-btn">Lighting</button>
+  </nav>
+
+  <div class="workspace">
+
+    <div class="viewport">
+      <div class="viewport-gizmo">XYZ</div>
+      <div id="webgl-container"></div>
+      <div id="error-console"></div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">AI Prompt Generator</div>
+        <div class="ai-prompt-box">
+          <select id="ai-model-select" class="ai-select">
+            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Fast)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Advanced)</option>
+          </select>
+          <textarea class="ai-textarea" id="ai-prompt-input" autocomplete="off" spellcheck="false" placeholder="Describe CNC part modification (e.g., add radial cooling fins, spiraling staircase)...">Mill high-performance radial turbine manifold with anodized finish.</textarea>
+          <div id="ai-suggestions" class="ai-suggestions"></div>
+          <button class="ai-btn" id="ai-generate-btn">
+            <span id="ai-icon-sparkle">⚡</span>
+            <span id="ai-icon-loading" class="spinner" style="display:none;">⚙</span>
+            <span id="ai-btn-text">Generate Toolpath</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Active Tools</div>
+        <div class="tool-grid" id="tool-grid">
+          <div class="tool-icon" data-tool="sel" title="Select">sel</div>
+          <div class="tool-icon" data-tool="mov" title="Move">mov</div>
+          <div class="tool-icon" data-tool="rot" title="Rotate">rot</div>
+          <div class="tool-icon" data-tool="scl" title="Scale">scl</div>
+          <div class="tool-icon" data-tool="ext" title="Extrude">ext</div>
+          <div class="tool-icon" data-tool="cut" title="Loop Cut">cut</div>
+          <div class="tool-icon" data-tool="bvl" title="Bevel">bvl</div>
+          <div class="tool-icon active" data-tool="dec" title="Decimate">dec</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Decimate Modifier</div>
+        <div class="prop-row">
+          <span class="prop-label">Ratio</span>
+          <input type="text" id="ratio-text" class="prop-value" value="1.00">
+        </div>
+        <input type="range" id="ratio-slider" min="0.05" max="1.0" step="0.05" value="1.0">
+        <div class="prop-row" style="margin-top: 10px;">
+          <span class="prop-label">Faces</span>
+          <span id="face-count" style="color: var(--text-main); font-weight: 500;">--</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Transform</div>
+        <div class="prop-row">
+          <span class="prop-label">Position X</span>
+          <input type="text" class="prop-value" value="0.00 m">
+        </div>
+        <div class="prop-row" style="margin-top: 6px;">
+          <span class="prop-label">Position Y</span>
+          <input type="text" class="prop-value" value="0.00 m">
+        </div>
+        <div class="prop-row" style="margin-top: 6px;">
+          <span class="prop-label">Position Z</span>
+          <input type="text" class="prop-value" value="1.50 m">
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+<script>
+  // --- Gemini API Setup ---
+  const apiKey = ""; // Provided at runtime by environment
+
+  async function fetchWithRetry(url, options, maxRetries = 5) {
+      const delays = [1000, 2000, 4000, 8000, 16000];
+      for (let i = 0; i < maxRetries; i++) {
+          try {
+              const response = await fetch(url, options);
+              if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+              return await response.json();
+          } catch (error) {
+              if (i === maxRetries - 1) throw error;
+              await new Promise(res => setTimeout(res, delays[i]));
+          }
+      }
+  }
+
+  // --- WebGL & Scene Setup ---
+  const container = document.getElementById('webgl-container');
+  const errorConsole = document.getElementById('error-console');
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x090d16);
+  scene.fog = new THREE.FogExp2(0x090d16, 0.035);
+
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(6, 4, 6);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight1.position.set(5, 10, 7);
+  dirLight1.castShadow = true;
+  scene.add(dirLight1);
+
+  const dirLight2 = new THREE.DirectionalLight(0x2563eb, 0.8);
+  dirLight2.position.set(-5, 5, -5);
+  scene.add(dirLight2);
+
+  const gridHelper = new THREE.GridHelper(20, 40, 0x374151, 0x1f2937);
+  gridHelper.position.y = -1.5;
+  scene.add(gridHelper);
+
+  let currentModelGroup = null;
+  let activeTool = 'dec';
+
+  // --- UI Elements Setup ---
+  const faceCountEl = document.getElementById('face-count');
+  const ratioSlider = document.getElementById('ratio-slider');
+  const ratioText = document.getElementById('ratio-text');
+
+  // --- AAA Grade Tool Systems ---
+  const tools = {
+    sel: () => {},
+    mov: (amount = 0.2) => {
+      if (currentModelGroup) currentModelGroup.position.y += amount;
+    },
+    rot: (amount = Math.PI / 8) => {
+      if (currentModelGroup) currentModelGroup.rotation.y += amount;
+    },
+    scl: (factor = 1.1) => {
+      if (currentModelGroup) currentModelGroup.scale.multiplyScalar(factor);
+    },
+    ext: () => {
+      if (!currentModelGroup) return;
+      currentModelGroup.traverse((child) => {
+        if (child.isMesh && child.geometry) {
+          child.geometry.computeVertexNormals();
+          const pos = child.geometry.attributes.position;
+          const normal = child.geometry.attributes.normal;
+          if (pos && normal) {
+            for (let i = 0; i < pos.count; i++) {
+              pos.setXYZ(
+                i,
+                pos.getX(i) + normal.getX(i) * 0.05,
+                pos.getY(i) + normal.getY(i) * 0.05,
+                pos.getZ(i) + normal.getZ(i) * 0.05
+              );
+            }
+            pos.needsUpdate = true;
+          }
+        }
+      });
+      updateFaceCount();
+    },
+    cut: () => {
+      if (!currentModelGroup) return;
+      currentModelGroup.traverse((child) => {
+        if (child.isMesh && child.geometry) {
+          const wireGeo = new THREE.WireframeGeometry(child.geometry);
+          const line = new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({ color: 0x2563eb }));
+          child.add(line);
+        }
+      });
+    },
+    bvl: () => {
+      if (!currentModelGroup) return;
+      currentModelGroup.traverse((child) => {
+        if (child.isMesh) {
+          child.material.roughness = Math.max(0, child.material.roughness - 0.1);
+          child.material.metalness = Math.min(1, child.material.metalness + 0.1);
+        }
+      });
+    },
+    dec: (ratio = 1.0) => {
+      if (currentModelGroup) {
+        currentModelGroup.scale.set(ratio, ratio, ratio);
+      }
+    }
+  };
+
+  // Tool Grid Selector Logic
+  const toolGrid = document.getElementById('tool-grid');
+  if (toolGrid) {
+    toolGrid.addEventListener('click', (e) => {
+      const icon = e.target.closest('.tool-icon');
+      if (!icon) return;
+      document.querySelectorAll('.tool-icon').forEach(t => t.classList.remove('active'));
+      icon.classList.add('active');
+      activeTool = icon.getAttribute('data-tool');
+      if (tools[activeTool]) {
+        tools[activeTool]();
+      }
+    });
+  }
+
+  // --- Intelligent Auto-completion engine ---
+  const presetPrompts = [
+    { text: "Mill high-performance radial turbine manifold with anodized finish.", tag: "Turbine" },
+    { text: "Add radial cooling fins around the central axis for heat dissipation.", tag: "Cooling" },
+    { text: "Sculpt spiraling staircase structure with filleted step edges.", tag: "Architecture" },
+    { text: "Bevel outer edges with a 2mm chamfer and polished metal surface.", tag: "Chamfer" },
+    { text: "Drill array of 6 hexagonally patterned mounting bolt holes.", tag: "Mounting" },
+    { text: "Extrude central cylinder and generate internal hollow fluid channel.", tag: "Fluids" },
+    { text: "Construct lightweight honeycomb infill matrix for aerospace component.", tag: "Aerospace" },
+    { text: "Machine high-precision spiral bevel gear set with 24 teeth.", tag: "Gears" }
+  ];
+
+  const promptInput = document.getElementById('ai-prompt-input');
+  const suggestionsBox = document.getElementById('ai-suggestions');
+
+  function renderSuggestions(matches) {
+    if (!suggestionsBox) return;
+    if (matches.length === 0) {
+      suggestionsBox.style.display = 'none';
+      return;
+    }
+    suggestionsBox.innerHTML = matches.map((m, idx) => `
+      <div class="ai-suggestion-item" data-index="${idx}">
+        <span>${m.text}</span>
+        <span class="tag">${m.tag}</span>
+      </div>
+    `).join('');
+    suggestionsBox.style.display = 'block';
+  }
+
+  if (promptInput && suggestionsBox) {
+    promptInput.addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase().trim();
+      if (!val) {
+        suggestionsBox.style.display = 'none';
+        return;
+      }
+      const matches = presetPrompts.filter(p => p.text.toLowerCase().includes(val));
+      renderSuggestions(matches);
+    });
+
+    suggestionsBox.addEventListener('click', (e) => {
+      const item = e.target.closest('.ai-suggestion-item');
+      if (item) {
+        const text = item.querySelector('span').innerText;
+        promptInput.value = text;
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.ai-prompt-box')) {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+  }
+
+  // --- UI Controls & Interactivity ---
+  function updateFaceCount() {
+      let count = 0;
+      if (currentModelGroup) {
+          currentModelGroup.traverse((child) => {
+              if (child.isMesh && child.geometry) {
+                  if (child.geometry.index) {
+                      count += child.geometry.index.count / 3;
+                  } else if (child.geometry.attributes.position) {
+                      count += child.geometry.attributes.position.count / 3;
+                  }
+              }
+          });
+      }
+      if (faceCountEl) {
+          faceCountEl.textContent = Math.floor(count);
+      }
+  }
+
+  if (ratioSlider) {
+      ratioSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (ratioText) ratioText.value = val.toFixed(2);
+        tools.dec(val);
+      });
+  }
+
+  // --- Dynamic Model Execution Logic ---
+  function compileAndRenderCode(codeString) {
+      if (currentModelGroup) {
+          scene.remove(currentModelGroup);
+          currentModelGroup = null;
+      }
+
+      errorConsole.style.display = 'none';
+      errorConsole.innerText = '';
+
+      try {
+          const buildModel = new Function('THREE', codeString);
+          const result = buildModel(THREE);
+
+          if (result && result instanceof THREE.Object3D) {
+              currentModelGroup = result;
+              scene.add(currentModelGroup);
+              updateFaceCount();
+          } else {
+              throw new Error("Script must 'return' a valid THREE.Object3D (like a Mesh or Group).");
+          }
+      } catch (err) {
+          console.error(err);
+          errorConsole.innerText = "Compilation/Execution Error:\n" + err.toString();
+          errorConsole.style.display = 'block';
+      }
+  }
+
+  // Initial Default Code setup
+  const defaultCode = `
+const group = new THREE.Group();
+
+// 1. Create a Base Plate
+const baseGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.3, 32);
+const baseMat = new THREE.MeshStandardMaterial({
+    color: 0xcccccc, metalness: 0.9, roughness: 0.25
+});
+const base = new THREE.Mesh(baseGeo, baseMat);
+group.add(base);
+
+// 2. Create a Center Pillar
+const pillarGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32);
+const pillarMat = new THREE.MeshStandardMaterial({
+    color: 0x111827, metalness: 0.8, roughness: 0.4
+});
+const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+pillar.position.y = 0.75;
+group.add(pillar);
+
+// 3. Add Parametric Machined Pegs
+const numPegs = 8;
+const radius = 1.1;
+
+for(let i = 0; i < numPegs; i++) {
+    const angle = (i / numPegs) * Math.PI * 2;
+    const pegGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.6, 16);
+    const pegMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.7, roughness: 0.2 });
+    const peg = new THREE.Mesh(pegGeo, pegMat);
+    peg.position.x = Math.cos(angle) * radius;
+    peg.position.z = Math.sin(angle) * radius;
+    peg.position.y = 0.3;
+    group.add(peg);
+}
+
+return group;`;
+
+  compileAndRenderCode(defaultCode);
+
+  // --- AI Code Generation Logic ---
+  async function generateCodeFromPrompt() {
+      const promptInput = document.getElementById('ai-prompt-input');
+      const prompt = promptInput ? promptInput.value.trim() : '';
+      if (!prompt) return;
+
+      const aiGenerateBtn = document.getElementById('ai-generate-btn');
+      const aiBtnText = document.getElementById('ai-btn-text');
+      const aiIconSparkle = document.getElementById('ai-icon-sparkle');
+      const aiIconLoading = document.getElementById('ai-icon-loading');
+
+      if (aiGenerateBtn) aiGenerateBtn.disabled = true;
+      if (aiBtnText) aiBtnText.innerText = 'Processing...';
+      if (aiIconSparkle) aiIconSparkle.style.display = 'none';
+      if (aiIconLoading) aiIconLoading.style.display = 'inline-block';
+
+      const systemPrompt = `You are an expert Three.js developer building 3D models for a Code-CAD IDE.
+You write standard JavaScript that generates 3D geometry using the global 'THREE' object.
+CRITICAL INSTRUCTIONS:
+1. Output ONLY the raw JavaScript code.
+2. DO NOT wrap the code in markdown formatting or \`\`\` blocks.
+3. DO NOT include conversational text or explanations.
+4. The code MUST end with 'return <your_object>;' where <your_object> is a THREE.Object3D.
+5. If you must include comments, keep them minimal.`;
+
+      const payload = {
+          contents: [{ parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      const modelSelect = document.getElementById('ai-model-select');
+      const selectedModel = modelSelect ? modelSelect.value : 'gemini-3-flash-preview';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+
+      try {
+          const result = await fetchWithRetry(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+
+          let generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+          // Cleanup AI outputs
+          generatedText = generatedText.replace(/```(javascript|js)?\n?/gi, '').replace(/```/g, '');
+          generatedText = generatedText.replace(/^(Here is the code|Sure, here is your model|The code follows:)/gmi, '');
+          generatedText = generatedText.trim();
+
+          if (generatedText) {
+              compileAndRenderCode(generatedText);
+          } else {
+              throw new Error("The AI returned an empty response.");
+          }
+      } catch (err) {
+          console.error(err);
+          errorConsole.innerText = "AI Generation Failed:\n" + err.message;
+          errorConsole.style.display = 'block';
+      } finally {
+          if (aiGenerateBtn) aiGenerateBtn.disabled = false;
+          if (aiBtnText) aiBtnText.innerText = 'Generate Toolpath';
+          if (aiIconSparkle) aiIconSparkle.style.display = 'inline-block';
+          if (aiIconLoading) aiIconLoading.style.display = 'none';
+      }
+  }
+
+  const aiGenBtn = document.getElementById('ai-generate-btn');
+  if (aiGenBtn) {
+      aiGenBtn.addEventListener('click', generateCodeFromPrompt);
+  }
+
+  // --- Viewport Orbit Controls Logic ---
+  let isDragging = false;
+  let previousMousePosition = { x: 0, y: 0 };
+  let targetRotation = { x: 0.5, y: 0.8 };
+  let currentRotation = { x: 0.5, y: 0.8 };
+  let cameraRadius = 8;
+
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - previousMousePosition.x;
+    const deltaY = e.clientY - previousMousePosition.y;
+
+    targetRotation.y += deltaX * 0.005;
+    targetRotation.x += deltaY * 0.005;
+    targetRotation.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, targetRotation.x));
+
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
+
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    cameraRadius += e.deltaY * 0.005;
+    cameraRadius = Math.max(3, Math.min(20, cameraRadius));
+  }, { passive: false });
+
+  let touchStartDist = 0;
+  container.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+      isDragging = false;
+      touchStartDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches.length === 1) {
+      const deltaX = e.touches[0].clientX - previousMousePosition.x;
+      const deltaY = e.touches[0].clientY - previousMousePosition.y;
+      targetRotation.y += deltaX * 0.005;
+      targetRotation.x += deltaY * 0.005;
+      targetRotation.x = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, targetRotation.x));
+      previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = touchStartDist - dist;
+      cameraRadius += delta * 0.01;
+      cameraRadius = Math.max(3, Math.min(20, cameraRadius));
+      touchStartDist = dist;
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => { isDragging = false; });
+
+  // --- Animation Loop ---
+  function animate() {
+    requestAnimationFrame(animate);
+
+    currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
+    currentRotation.y += (targetRotation.y - currentRotation.y) * 0.1;
+
+    targetRotation.y += 0.002;
+
+    camera.position.x = cameraRadius * Math.sin(currentRotation.y) * Math.cos(currentRotation.x);
+    camera.position.y = cameraRadius * Math.sin(currentRotation.x);
+    camera.position.z = cameraRadius * Math.cos(currentRotation.y) * Math.cos(currentRotation.x);
+    camera.lookAt(0, 0, 0);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  });
+</script>
+</body>
+</html>
